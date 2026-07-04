@@ -5,6 +5,17 @@ _bash_completions_getter_path=${0:A:h}/bash-completions-getter.sh
 function _bash_completions_fallback_completer {
     emulate -L zsh
     unsetopt nomatch badpattern
+
+	local -a bash_completions=(${(@s/:/)ZSH_BASH_COMPLETIONS_FALLBACK_PATH:-${^${(@s/:/)${XDG_DATA_DIRS:-/usr/share}}}/bash-completion/completions})
+	typeset -aU dirs=()
+    dirs=(
+        ${BASH_COMPLETION_USER_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/bash-completion}/completions
+    )
+    for dir in ${(@s/:/)${XDG_DATA_DIRS:-/usr/local/share:/usr/share}}; do
+        dirs+=("$dir/bash-completion/completions")
+    done
+    dirs=("$bash_completions[@]" "${dirs[@]}")
+
     local out=("${(@f)$( \
         ZSH_NAME="$name" \
         ZSH_BUFFER="$BUFFER" \
@@ -12,6 +23,7 @@ function _bash_completions_fallback_completer {
         ZSH_WORDBREAKS="$WORDCHARS" \
         ZSH_WORDS="${words[@]}" \
         ZSH_CURRENT=$((CURRENT-1)) \
+		ZSH_BASH_COMPLETIONS_FALLBACK_PATH="${(j/:/)dirs}" \
         bash -c \
         "source ${_bash_completions_getter_path}; get_completions")}");
 
@@ -63,8 +75,8 @@ function _bash_completions_fetch_supported_commands {
     setopt extended_glob typeset_silent no_short_loops
     unsetopt nomatch
 
-    local bash_completions=${ZSH_BASH_COMPLETIONS_FALLBACK_PATH:-${${(@s/:/)${XDG_DATA_DIRS:-/usr/share}}[1]}/bash-completion}
-    local -a dirs=(
+	local -a bash_completions=(${(@s/:/)ZSH_BASH_COMPLETIONS_FALLBACK_PATH:-${^${(@s/:/)${XDG_DATA_DIRS:-/usr/share}}}/bash-completion/completions})
+	local -a dirs=(
         ${BASH_COMPLETION_USER_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/bash-completion}/completions
     )
 
@@ -72,7 +84,7 @@ function _bash_completions_fetch_supported_commands {
         dirs+=("$dir/bash-completion/completions")
     done
 
-    dirs+=("$bash_completions/completions")
+    dirs=("$bash_completions[@]" "${dirs[@]}")
 
     for dir in "${dirs[@]}"; do
         for c in "$dir"/*; do
@@ -91,7 +103,6 @@ function _bash_completions_fetch_supported_commands {
 }
 
 function _bash_completions_load {
-    local bash_completions=${ZSH_BASH_COMPLETIONS_FALLBACK_PATH:-${${(@s/:/)${XDG_DATA_DIRS:-/usr/share}}[1]}/bash-completion}
     local reserved_words=(
         "do"
         "done"
@@ -121,11 +132,6 @@ function _bash_completions_load {
         "readonly"
         "typeset"
     )
-
-    if ! [ -f /etc/bash_completion ] &&
-       ! [ -f "$bash_completions/bash_completion" ]; then
-        return 1;
-    fi
 
     local -a -U _bash_completions_commands=()
     _bash_completions_fetch_supported_commands
