@@ -241,7 +241,7 @@ get_completions() {
     fi
 
     # load completion
-	source_bash_completion; source $(dirname $0)/cus_comp_load.sh
+	source_bash_completion; source ${ZSH_PATCH_LOAD}
 
     # load completion, in case getting from the specific command file
     completion_command=$(complete -p "$cmd_name" 2>/dev/null)

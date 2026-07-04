@@ -1,6 +1,7 @@
 [[ -o interactive ]] || return 0
 
 _bash_completions_getter_path=${0:A:h}/bash-completions-getter.sh
+_bash_completions_patch_load=${0:A:h}/cus_comp_load.sh
 
 function _bash_completions_fallback_completer {
     emulate -L zsh
@@ -24,6 +25,7 @@ function _bash_completions_fallback_completer {
         ZSH_WORDS="${words[@]}" \
         ZSH_CURRENT=$((CURRENT-1)) \
 		ZSH_BASH_COMPLETIONS_FALLBACK_PATH="${(j/:/)dirs}" \
+		ZSH_PATCH_LOAD=${_bash_completions_patch_load} \
         bash -c \
         "source ${_bash_completions_getter_path}; get_completions")}");
 
